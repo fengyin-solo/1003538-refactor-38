@@ -7,6 +7,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
+    "prebuild": "node scripts/plan/run.mjs scripts/plan/preflight.ts",
+    "build:checked": "npm run prebuild && npm run build",
+    "plan:migrate": "node scripts/plan/run.mjs scripts/plan/migrate.ts",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit"
   },

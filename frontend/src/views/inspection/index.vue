@@ -37,6 +37,7 @@
       <thead>
         <tr>
           <th v-for="column in columns" :key="column">{{ column }}</th>
+          <th>执行方案版本</th>
           <th>当前状态</th>
           <th>可执行动作</th>
         </tr>
@@ -44,6 +45,7 @@
       <tbody>
         <tr v-for="row in rows" :key="String(row.id)">
           <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
+          <td>{{ planVersionFor(String(row['站点编号'])) }}</td>
           <td>{{ row.status }}</td>
           <td class="row-actions">
             <button
@@ -58,10 +60,12 @@
           </td>
         </tr>
         <tr v-if="!rows.length">
-          <td :colspan="columns.length + 2" class="empty-state">暂无巡检记录数据，可先登记巡检记录</td>
+          <td :colspan="columns.length + 3" class="empty-state">暂无巡检记录数据，可先登记巡检记录</td>
         </tr>
       </tbody>
     </table>
+
+    <PlanChecklistPanel title="巡检清单（读取当前生效测报方案版本）" />
 
     <footer class="page-foot">
       <span>共 {{ total }} 条巡检记录记录</span>
@@ -79,6 +83,8 @@ import {
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
+import { planStore } from '@/data/plan/store'
+import PlanChecklistPanel from '@/components/PlanChecklistPanel.vue'
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('inspection')
@@ -92,6 +98,11 @@ const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+
+function planVersionFor(stationCode: string): string {
+  const version = planStore().effectiveVersionForStation(stationCode)
+  return version ? `${version.planNo} ${version.versionCode}` : '无生效方案'
+}
 const statusSummary = computed(() =>
   statuses.map((status: string) => ({
     status,

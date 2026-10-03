@@ -35,8 +35,50 @@ npm run dev
 
 ```bash
 cd frontend
-npm run build
+npm run build        # 仅类型检查 + 打包
+npm run build:checked # 推荐：先跑构建前检查，通过后再打包
 ```
+
+## 测报方案版本治理
+
+测报方案（`plan`）在普通条目之外多一套**版本库**，页面渲染、版本检查、归档三处的判断
+统一收敛到 `src/data/plan/`，不在组件里各写一遍：
+
+```text
+src/data/plan/
+├── types.ts       状态/动作常量、版本与检查报告类型（唯一事实来源）
+├── policy.ts      纯函数：状态归类、批准时间回填、版本号、迁移引擎、上线前检查
+├── store.ts       版本库门面（localStorage 适配器）+ 方案统一动作入口
+├── node-adapter.ts Node 侧文件/临时适配器
+└── pipeline.ts    迁移自检（断点续跑/幂等）+ 同一快照上线前检查
+```
+
+约定与流程：
+
+- **统一写法**：方案页的按钮可用性、「上线前检查」、「归档废止方案」都走
+  `executePlanAction` / `archiveRepealedPlans` 与 `runPreflightChecks`；状态阶段、
+  动作目标、版本规则只在 `policy.ts` 定义。
+- **旧方案回填**：迁移时缺少版本号的旧方案按**批准时间**生成版本号
+  （`V-YYYYMMDD`）；原文没有「批准时间」列时按回填基准日 `1970-01-01` 生成并在
+  页面标记「批准时间回填」。版本记录保存批准当时的原文快照，**只追加、不回写、
+  不覆盖历史方案原文**。
+- **三个迁移入口共用同一条管线**（`pipeline.ts`）：
+  - 本地开发：`npm run dev` 启动时 Vite 插件（`vite-plan-plugin.ts`）自动迁移 + 检查；
+    浏览器端 `main.ts` 启动也会对 localStorage 里的数据幂等迁移；
+  - 构建前：`npm run prebuild`（或 `make prebuild`），`build:checked` 会先跑它；
+  - 示例数据：`npm run plan:migrate`（或 `make migrate`，状态文件
+    `frontend/.plan-state/plan-versions.json`，已 gitignore）。
+- **断点续跑 / 幂等**：迁移以已处理方案 id 为游标，中断后再次执行从未处理方案继续，
+  `--limit=N` 可单批处理；重复执行新增版本数为 0，同一方案不会产生第二个有效版本。
+  每次管线都会在临时版本库上自检这两条保证。
+- **上线前检查同一批数据**：方案状态 ↔ 版本库、站房维护待办（`stationhouse` 的
+  pending 记录）、巡检清单（`inspection`）三项核对跑在**同一个 `PlanSnapshot`** 上：
+  有效方案必须恰好一个有效版本且原文指纹一致、废止方案必须已归档且无有效版本、
+  站房待办站点必须被某个有效方案覆盖、巡检记录必须能追溯到同一方案版本及其检查项目。
+- **其他页面读同一版本**：巡检记录、站房维护、运营概览页挂同一个
+  `components/PlanChecklistPanel.vue`，清单条目（监测项目 × 测次安排）全部由当前
+  生效方案版本派生；巡检表每行还会显示该站点解析到的同一方案版本号。
+
 
 ## 业务模块
 

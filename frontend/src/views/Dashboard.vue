@@ -28,6 +28,9 @@
         </tr>
       </tbody>
     </table>
+
+    <PlanChecklistPanel title="巡检清单（全局读取当前生效测报方案版本）" />
+
     <footer class="page-foot">
       <span>数据保存在本机浏览器里，换浏览器或清缓存会回到示例数据</span>
     </footer>
@@ -38,6 +41,7 @@
 import { onMounted, ref } from 'vue'
 
 import { loadOverview } from '@/api/local-service'
+import PlanChecklistPanel from '@/components/PlanChecklistPanel.vue'
 import type { OverviewResult } from '@/data/types'
 
 const cards = ref<OverviewResult['cards']>([])
