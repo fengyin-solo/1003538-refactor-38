@@ -29,6 +29,18 @@ function readStorage(): Record<string, EntryRow[]> {
 
 let cache: Record<string, EntryRow[]> | null = null
 
+const rowListeners = new Set<() => void>()
+
+/** 业务数据写回后广播：页面与共享清单据此重新读取同一份数据。 */
+export function subscribeRows(listener: () => void): () => void {
+  rowListeners.add(listener)
+  return () => rowListeners.delete(listener)
+}
+
+function notifyRows(): void {
+  rowListeners.forEach((listener) => listener())
+}
+
 export function allRows(): Record<string, EntryRow[]> {
   if (cache === null) {
     cache = readStorage()
@@ -46,6 +58,7 @@ export function saveRows(key: string, rows: EntryRow[]): void {
   if (typeof window !== 'undefined' && window.localStorage) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   }
+  notifyRows()
 }
 
 export function resetRows(key: string): EntryRow[] {

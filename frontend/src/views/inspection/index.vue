@@ -11,6 +11,20 @@
       </div>
     </header>
 
+    <div v-if="activePlan" class="preflight-panel" data-role="inspection-checklist">
+      <div>
+        <strong>巡检清单依据</strong>
+        <span class="banner-version">版本 {{ activePlan.version.versionNo }}</span>
+        <span class="banner-time">{{ activePlan.planName }} · 批准于 {{ activePlan.version.approvedAt }}</span>
+      </div>
+      <ul class="checklist-items">
+        <li v-for="item in activePlan.checklist" :key="item">{{ item }}</li>
+      </ul>
+    </div>
+    <div v-else class="preflight-panel">
+      <span class="error-text">当前没有生效的测报方案版本，巡检清单暂无可依据版本。</span>
+    </div>
+
     <div class="stat-row">
       <article v-for="item in stats" :key="item.label" class="stat-card">
         <span class="stat-label">{{ item.label }}</span>
@@ -79,7 +93,10 @@ import {
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
+import { useActivePlan } from '@/stores/active-plan'
 import type { EntryRow } from '@/data/types'
+
+const { activePlan } = useActivePlan()
 
 const meta = moduleMeta('inspection')
 const columns = ["记录编号", "站点编号", "巡检日期", "巡检人员", "检查项目", "发现问题", "处理措施", "巡检状态"]

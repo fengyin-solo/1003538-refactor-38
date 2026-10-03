@@ -85,3 +85,6 @@ desktop.ini
 *.db
 *.pid
 *.seed
+
+# 测报方案构建/dev 闸门的本地状态（迁移游标与版本库）
+frontend/.plan-gate-state.json
